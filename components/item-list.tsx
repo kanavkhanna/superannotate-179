@@ -33,10 +33,6 @@ export function ItemList({ categoryId, items, onAddItem, onToggleItem, onDeleteI
   const handleAddItem = () => {
     if (!newItemName.trim()) {
       setInputError("Item name cannot be empty")
-      toast.error("Invalid item name", {
-        description: "Item name cannot be empty",
-        icon: <AlertCircle className="h-5 w-5" />,
-      })
       return
     }
 
@@ -45,10 +41,6 @@ export function ItemList({ categoryId, items, onAddItem, onToggleItem, onDeleteI
 
     if (isDuplicate) {
       setInputError("An item with this name already exists")
-      toast.error("Duplicate item", {
-        description: "An item with this name already exists",
-        icon: <AlertCircle className="h-5 w-5" />,
-      })
       return
     }
 
@@ -88,7 +80,7 @@ export function ItemList({ categoryId, items, onAddItem, onToggleItem, onDeleteI
 
   return (
     <div className="space-y-4 pt-4 pb-4 px-4">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-center gap-2">
         <div className="w-full">
           <Input
             placeholder="Add new item..."
@@ -112,7 +104,7 @@ export function ItemList({ categoryId, items, onAddItem, onToggleItem, onDeleteI
         <Button
           size="sm"
           onClick={handleAddItem}
-          className="bg-primary hover:bg-primary/90 transition-colors shadow-sm"
+          className="w-full sm:w-auto bg-primary hover:bg-primary/90 transition-colors shadow-sm"
           aria-label={`Add ${newItemName || "new item"}`}
         >
           <Plus className="h-4 w-4 mr-1" /> <span>Add</span>

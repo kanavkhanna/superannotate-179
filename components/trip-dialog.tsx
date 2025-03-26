@@ -1,10 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
-import { AlertCircle } from "lucide-react"
-import { toast } from "sonner"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,16 +15,33 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { Trip } from "@/components/packing-list-organizer"
 
-interface AddTripDialogProps {
+interface TripDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAddTrip: (trip: Trip) => void
+  mode: "add" | "edit"
+  trip?: Trip | null
+  onSave: (trip: Trip) => void
 }
 
-export function AddTripDialog({ open, onOpenChange, onAddTrip }: AddTripDialogProps) {
+export function TripDialog({ open, onOpenChange, mode, trip, onSave }: TripDialogProps) {
   const [tripName, setTripName] = useState("")
   const [tripDate, setTripDate] = useState("")
   const [nameError, setNameError] = useState("")
+  const [dateError, setDateError] = useState("")
+
+  useEffect(() => {
+    if (open) {
+      if (mode === "edit" && trip) {
+        setTripName(trip.name)
+        setTripDate(trip.date)
+      } else {
+        setTripName("")
+        setTripDate("")
+      }
+      setNameError("")
+      setDateError("")
+    }
+  }, [open, mode, trip])
 
   // Get today's date in YYYY-MM-DD format for min attribute
   const getTodayDate = () => {
@@ -40,65 +54,62 @@ export function AddTripDialog({ open, onOpenChange, onAddTrip }: AddTripDialogPr
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    let isValid = true
 
-    // Validate
+    // Validate name
     if (!tripName.trim()) {
       setNameError("Trip name is required")
-      toast.error("Invalid trip name", {
-        description: "Trip name is required",
-        icon: <AlertCircle className="h-5 w-5" />,
-      })
-      return
+      isValid = false
+    } else {
+      setNameError("")
     }
 
-    // Validate date if provided
-    if (tripDate && new Date(tripDate) < new Date(getTodayDate())) {
-      toast.error("Invalid date", {
-        description: "Trip date cannot be in the past",
-        icon: <AlertCircle className="h-5 w-5" />,
-      })
-      return
+    // Validate date is provided for new trips
+    if (mode === "add" && !tripDate) {
+      setDateError("Trip date is required")
+      isValid = false
+    } else if (tripDate && new Date(tripDate) < new Date(getTodayDate())) {
+      // Validate date is not in the past
+      setDateError("Trip date cannot be in the past")
+      isValid = false
+    } else {
+      setDateError("")
     }
+
+    if (!isValid) return
 
     try {
-      const newTrip: Trip = {
-        id: crypto.randomUUID(),
-        name: tripName,
-        date: tripDate,
-        categories: [],
+      if (mode === "add") {
+        const newTrip: Trip = {
+          id: crypto.randomUUID(),
+          name: tripName,
+          date: tripDate,
+          categories: [],
+        }
+        onSave(newTrip)
+      } else if (mode === "edit" && trip) {
+        const updatedTrip: Trip = {
+          ...trip,
+          name: tripName,
+          date: tripDate,
+        }
+        onSave(updatedTrip)
       }
-
-      onAddTrip(newTrip)
-      resetForm()
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to create trip"
-      toast.error("Failed to create trip", {
-        description: errorMessage,
-        icon: <AlertCircle className="h-5 w-5" />,
-      })
+      const errorMessage = err instanceof Error ? err.message : `Failed to ${mode} trip`
+      setNameError(errorMessage)
     }
-  }
-
-  const resetForm = () => {
-    setTripName("")
-    setTripDate("")
-    setNameError("")
-  }
-
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      resetForm()
-    }
-    onOpenChange(open)
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] border-primary/20 shadow-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-xl">Create New Trip</DialogTitle>
-            <DialogDescription>Add a new trip to organize your packing list.</DialogDescription>
+            <DialogTitle className="text-xl">{mode === "add" ? "Create New Trip" : "Edit Trip"}</DialogTitle>
+            <DialogDescription>
+              {mode === "add" ? "Add a new trip to organize your packing list." : "Update your trip details."}
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -129,27 +140,35 @@ export function AddTripDialog({ open, onOpenChange, onAddTrip }: AddTripDialogPr
                 id="date"
                 type="date"
                 value={tripDate}
-                onChange={(e) => setTripDate(e.target.value)}
+                onChange={(e) => {
+                  setTripDate(e.target.value)
+                  if (e.target.value) {
+                    setDateError("")
+                  }
+                }}
                 min={getTodayDate()}
-                className="border-primary/20 focus-visible:ring-primary/30"
+                className={`border-primary/20 focus-visible:ring-primary/30 ${
+                  dateError ? "border-destructive focus-visible:ring-destructive/30" : ""
+                }`}
               />
+              {dateError && <p className="text-sm text-destructive">{dateError}</p>}
             </div>
           </div>
           <DialogFooter className="gap-2">
             <Button
               type="button"
               variant="outline"
-              onClick={() => handleOpenChange(false)}
-              aria-label="Cancel creating trip"
+              onClick={() => onOpenChange(false)}
+              aria-label={mode === "add" ? "Cancel creating trip" : `Cancel editing ${tripName}`}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-primary/90 hover:bg-primary transition-colors"
-              aria-label={`Create ${tripName || "new trip"}`}
+              className="bg-primary hover:bg-primary/90 transition-colors"
+              aria-label={mode === "add" ? `Create ${tripName || "new trip"}` : `Save changes to ${tripName}`}
             >
-              Create Trip
+              {mode === "add" ? "Create Trip" : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CategoryList } from "@/components/category-list"
 import { TripSelector } from "@/components/trip-selector"
-import { AddTripDialog } from "@/components/add-trip-dialog"
-import { EditTripDialog } from "@/components/edit-trip-dialog"
+import { TripDialog } from "@/components/trip-dialog"
 import { Progress } from "@/components/ui/progress"
 import {
   Dialog,
@@ -107,8 +106,8 @@ const STORAGE_KEY = "packingListTrips"
 export function PackingListOrganizer() {
   const [trips, setTrips] = useState<Trip[]>([])
   const [currentTrip, setCurrentTrip] = useState<Trip | null>(null)
-  const [isAddTripOpen, setIsAddTripOpen] = useState(false)
-  const [isEditTripOpen, setIsEditTripOpen] = useState(false)
+  const [isTripDialogOpen, setIsTripDialogOpen] = useState(false)
+  const [tripDialogMode, setTripDialogMode] = useState<"add" | "edit">("add")
   const [isDeleteTripOpen, setIsDeleteTripOpen] = useState(false)
   const [progress, setProgress] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -192,7 +191,7 @@ export function PackingListOrganizer() {
       const updatedTrips = [...trips, newTrip]
       setTrips(updatedTrips)
       setCurrentTrip(newTrip)
-      setIsAddTripOpen(false)
+      setIsTripDialogOpen(false)
 
       // Save to localStorage immediately
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTrips))
@@ -214,7 +213,7 @@ export function PackingListOrganizer() {
       const updatedTrips = trips.map((trip) => (trip.id === updatedTrip.id ? updatedTrip : trip))
       setTrips(updatedTrips)
       setCurrentTrip(updatedTrip)
-      setIsEditTripOpen(false)
+      setIsTripDialogOpen(false)
 
       // Save to localStorage immediately
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTrips))
@@ -540,6 +539,16 @@ export function PackingListOrganizer() {
     }
   }
 
+  const openAddTripDialog = () => {
+    setTripDialogMode("add")
+    setIsTripDialogOpen(true)
+  }
+
+  const openEditTripDialog = () => {
+    setTripDialogMode("edit")
+    setIsTripDialogOpen(true)
+  }
+
   // Show loading state
   if (isLoading) {
     return (
@@ -575,15 +584,15 @@ export function PackingListOrganizer() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-[640px] mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-slide-in">
         <TripSelector trips={trips} currentTripId={currentTrip?.id} onTripChange={handleTripChange} />
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
           <Button
             size="sm"
-            onClick={() => setIsAddTripOpen(true)}
-            className="bg-primary hover:bg-primary/90 transition-colors shadow-sm"
+            onClick={openAddTripDialog}
+            className="w-full sm:w-auto bg-primary hover:bg-primary/90 transition-colors shadow-sm"
             aria-label="Create new trip"
           >
             <Plus className="h-4 w-4 mr-1" /> <span>New Trip</span>
@@ -594,8 +603,8 @@ export function PackingListOrganizer() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setIsEditTripOpen(true)}
-                className="border-primary/20 hover:border-primary/40 transition-colors"
+                onClick={openEditTripDialog}
+                className="w-full sm:w-auto border-primary/20 hover:border-primary/40 transition-colors"
                 aria-label={`Edit ${currentTrip?.name} trip`}
               >
                 <Edit className="h-4 w-4 mr-1" /> <span>Edit</span>
@@ -605,7 +614,7 @@ export function PackingListOrganizer() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsDeleteTripOpen(true)}
-                className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/50 transition-colors"
+                className="w-full sm:w-auto border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/50 transition-colors"
                 aria-label={`Delete ${currentTrip?.name} trip`}
               >
                 <Trash2 className="h-4 w-4 mr-1" /> <span>Delete</span>
@@ -673,7 +682,7 @@ export function PackingListOrganizer() {
               Create your first trip to start organizing your packing lists
             </p>
             <Button
-              onClick={() => setIsAddTripOpen(true)}
+              onClick={openAddTripDialog}
               className="bg-primary hover:bg-primary/90 transition-colors"
               aria-label="Create your first trip"
             >
@@ -683,44 +692,37 @@ export function PackingListOrganizer() {
         </Card>
       )}
 
-      <AddTripDialog open={isAddTripOpen} onOpenChange={setIsAddTripOpen} onAddTrip={handleAddTrip} />
+      <TripDialog
+        open={isTripDialogOpen}
+        onOpenChange={setIsTripDialogOpen}
+        mode={tripDialogMode}
+        trip={tripDialogMode === "edit" ? currentTrip : undefined}
+        onSave={tripDialogMode === "add" ? handleAddTrip : handleEditTrip}
+      />
 
       {currentTrip && (
-        <>
-          <EditTripDialog
-            open={isEditTripOpen}
-            onOpenChange={setIsEditTripOpen}
-            trip={currentTrip}
-            onEditTrip={handleEditTrip}
-          />
-
-          <Dialog open={isDeleteTripOpen} onOpenChange={setIsDeleteTripOpen}>
-            <DialogContent className="sm:max-w-[425px] border-destructive/20">
-              <DialogHeader>
-                <DialogTitle className="text-destructive">Delete Trip</DialogTitle>
-                <DialogDescription className="text-foreground">
-                  Are you sure you want to delete "{currentTrip?.name}"? This action cannot be undone.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter className="gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsDeleteTripOpen(false)}
-                  aria-label={`Cancel deleting ${currentTrip?.name} trip`}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleDeleteTrip}
-                  aria-label={`Delete ${currentTrip?.name} trip`}
-                >
-                  Delete
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </>
+        <Dialog open={isDeleteTripOpen} onOpenChange={setIsDeleteTripOpen}>
+          <DialogContent className="sm:max-w-[425px] border-destructive/20">
+            <DialogHeader>
+              <DialogTitle className="text-destructive">Delete Trip</DialogTitle>
+              <DialogDescription className="text-foreground">
+                Are you sure you want to delete "{currentTrip?.name}"? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteTripOpen(false)}
+                aria-label={`Cancel deleting ${currentTrip?.name} trip`}
+              >
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteTrip} aria-label={`Delete ${currentTrip?.name} trip`}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )

@@ -43,10 +43,6 @@ export function CategoryList({
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) {
       setInputError("Category name cannot be empty")
-      toast.error("Invalid category name", {
-        description: "Category name cannot be empty",
-        icon: <AlertCircle className="h-5 w-5" />,
-      })
       return
     }
 
@@ -57,10 +53,6 @@ export function CategoryList({
 
     if (isDuplicate) {
       setInputError("A category with this name already exists")
-      toast.error("Duplicate category", {
-        description: "A category with this name already exists",
-        icon: <AlertCircle className="h-5 w-5" />,
-      })
       return
     }
 

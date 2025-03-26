@@ -21,7 +21,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
-          <Toaster position="top-right" closeButton richColors theme="system" duration={8000} expand={true} />
+          <Toaster position="top-right" closeButton richColors theme="system" duration={2000} expand={true} />
         </ThemeProvider>
       </body>
     </html>

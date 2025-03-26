@@ -26,13 +26,13 @@ export function TripSelector({ trips, currentTripId, onTripChange }: TripSelecto
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="min-w-[220px] justify-between border-primary/20 bg-background/80 backdrop-blur-sm shadow-sm hover:border-primary/40 transition-colors"
+          className="w-full sm:min-w-[220px] sm:w-auto justify-between border-primary/20 bg-background/80 backdrop-blur-sm shadow-sm hover:border-primary/40 transition-colors"
         >
           {currentTrip ? currentTrip.name : "Select a trip..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[220px] p-0 border-primary/20 bg-background/80 backdrop-blur-md shadow-lg">
+      <PopoverContent className="w-full sm:w-[220px] p-0 border-primary/20 bg-background/80 backdrop-blur-md shadow-lg">
         <Command>
           <CommandInput placeholder="Search trips..." className="border-none focus:ring-0" />
           <CommandList>
