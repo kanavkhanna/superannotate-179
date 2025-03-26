@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { Plus, Trash2, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
@@ -58,7 +60,8 @@ export function ItemList({ categoryId, items, onAddItem, onToggleItem, onDeleteI
     }
   }
 
-  const handleDeleteItem = (itemId: string, itemName: string) => {
+  const handleDeleteItem = (e: React.MouseEvent, itemId: string, itemName: string) => {
+    e.stopPropagation() // Prevent toggling the checkbox when clicking delete
     setItemToDelete(itemId)
     setItemNameToDelete(itemName)
   }
@@ -116,7 +119,8 @@ export function ItemList({ categoryId, items, onAddItem, onToggleItem, onDeleteI
           items.map((item) => (
             <div
               key={item.id}
-              className={`flex items-center justify-between p-3 rounded-md border border-transparent transition-all duration-200 ${
+              onClick={() => onToggleItem(item.id)}
+              className={`flex items-center justify-between p-3 rounded-md border border-transparent transition-all duration-200 cursor-pointer ${
                 item.packed ? "bg-primary/10 border-primary/20" : "hover:bg-muted/30 hover:border-primary/10"
               }`}
             >
@@ -127,12 +131,14 @@ export function ItemList({ categoryId, items, onAddItem, onToggleItem, onDeleteI
                   onCheckedChange={() => onToggleItem(item.id)}
                   aria-label={`Mark ${item.name} as ${item.packed ? "unpacked" : "packed"}`}
                   className={`${item.packed ? "border-primary bg-primary text-primary-foreground" : "border-foreground/50"} transition-colors`}
+                  onClick={(e) => e.stopPropagation()} // Prevent double toggling when clicking directly on checkbox
                 />
                 <label
                   htmlFor={`item-${item.id}`}
                   className={`text-sm font-medium cursor-pointer transition-all ${
                     item.packed ? "line-through text-foreground/70" : "text-foreground"
                   }`}
+                  onClick={(e) => e.stopPropagation()} // Prevent double toggling when clicking directly on label
                 >
                   {item.name}
                 </label>
@@ -140,7 +146,7 @@ export function ItemList({ categoryId, items, onAddItem, onToggleItem, onDeleteI
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleDeleteItem(item.id, item.name)}
+                onClick={(e) => handleDeleteItem(e, item.id, item.name)}
                 className="h-7 w-7 opacity-70 hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-colors"
                 aria-label={`Delete ${item.name}`}
               >

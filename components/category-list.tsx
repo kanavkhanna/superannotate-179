@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Trash2, AlertCircle } from "lucide-react"
+import { Plus, Trash2, AlertCircle, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -140,6 +140,7 @@ export function CategoryList({
                       {category.items.filter((item) => item.packed).length}/{category.items.length}
                     </span>
                   </div>
+                  <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 ml-auto mr-2" />
                 </AccordionTrigger>
                 {/* Delete category button */}
                 <Button

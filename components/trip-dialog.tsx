@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { Trip } from "@/components/packing-list-organizer"
 
 interface TripDialogProps {
@@ -25,7 +26,7 @@ interface TripDialogProps {
 
 export function TripDialog({ open, onOpenChange, mode, trip, onSave }: TripDialogProps) {
   const [tripName, setTripName] = useState("")
-  const [tripDate, setTripDate] = useState("")
+  const [tripDate, setTripDate] = useState<Date | undefined>(undefined)
   const [nameError, setNameError] = useState("")
   const [dateError, setDateError] = useState("")
 
@@ -33,23 +34,19 @@ export function TripDialog({ open, onOpenChange, mode, trip, onSave }: TripDialo
     if (open) {
       if (mode === "edit" && trip) {
         setTripName(trip.name)
-        setTripDate(trip.date)
+        setTripDate(trip.date ? new Date(trip.date) : undefined)
       } else {
         setTripName("")
-        setTripDate("")
+        setTripDate(undefined)
       }
       setNameError("")
       setDateError("")
     }
   }, [open, mode, trip])
 
-  // Get today's date in YYYY-MM-DD format for min attribute
-  const getTodayDate = () => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, "0")
-    const day = String(today.getDate()).padStart(2, "0")
-    return `${year}-${month}-${day}`
+  const formatDateToString = (date: Date | undefined): string => {
+    if (!date) return ""
+    return date.toISOString().split("T")[0] // Format as YYYY-MM-DD
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -68,10 +65,6 @@ export function TripDialog({ open, onOpenChange, mode, trip, onSave }: TripDialo
     if (mode === "add" && !tripDate) {
       setDateError("Trip date is required")
       isValid = false
-    } else if (tripDate && new Date(tripDate) < new Date(getTodayDate())) {
-      // Validate date is not in the past
-      setDateError("Trip date cannot be in the past")
-      isValid = false
     } else {
       setDateError("")
     }
@@ -83,7 +76,7 @@ export function TripDialog({ open, onOpenChange, mode, trip, onSave }: TripDialo
         const newTrip: Trip = {
           id: crypto.randomUUID(),
           name: tripName,
-          date: tripDate,
+          date: formatDateToString(tripDate),
           categories: [],
         }
         onSave(newTrip)
@@ -91,7 +84,7 @@ export function TripDialog({ open, onOpenChange, mode, trip, onSave }: TripDialo
         const updatedTrip: Trip = {
           ...trip,
           name: tripName,
-          date: tripDate,
+          date: formatDateToString(tripDate),
         }
         onSave(updatedTrip)
       }
@@ -136,20 +129,15 @@ export function TripDialog({ open, onOpenChange, mode, trip, onSave }: TripDialo
               <Label htmlFor="date" className="text-sm font-medium">
                 Trip Date
               </Label>
-              <Input
-                id="date"
-                type="date"
-                value={tripDate}
-                onChange={(e) => {
-                  setTripDate(e.target.value)
-                  if (e.target.value) {
+              <DatePicker
+                date={tripDate}
+                setDate={(date) => {
+                  setTripDate(date)
+                  if (date) {
                     setDateError("")
                   }
                 }}
-                min={getTodayDate()}
-                className={`border-primary/20 focus-visible:ring-primary/30 ${
-                  dateError ? "border-destructive focus-visible:ring-destructive/30" : ""
-                }`}
+                error={!!dateError}
               />
               {dateError && <p className="text-sm text-destructive">{dateError}</p>}
             </div>
